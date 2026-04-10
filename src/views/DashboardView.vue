@@ -90,6 +90,43 @@
 
       <div v-else class="error-message">⚠️ 뉴스를 불러올 수 없습니다.</div>
     </div>
+
+    <!-- 추가 정보 -->
+    <div class="card info-card">
+      <div class="card-header">
+        <h2>📅 날짜 정보</h2>
+      </div>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-icon">📆</span>
+          <div>
+            <div class="info-label">연도</div>
+            <div class="info-value">{{ dateInfo.year }}년</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">📌</span>
+          <div>
+            <div class="info-label">월</div>
+            <div class="info-value">{{ dateInfo.month }}월</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">📍</span>
+          <div>
+            <div class="info-label">일</div>
+            <div class="info-value">{{ dateInfo.day }}일</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">🗓️</span>
+          <div>
+            <div class="info-label">요일</div>
+            <div class="info-value">{{ dateInfo.dayOfWeek }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -131,6 +168,18 @@ const currentTime = computed(() => {
 const loading = ref({
   weather: false,
   news: false,
+})
+
+// 날짜 정보
+const dateInfo = computed(() => {
+  const weekdays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+
+  return {
+    year: now.value.getFullYear(),
+    month: now.value.getMonth() + 1,
+    day: now.value.getDate(),
+    dayOfWeek: weekdays[now.value.getDay()],
+  }
 })
 
 // 날씨 데이터
