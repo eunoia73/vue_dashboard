@@ -52,6 +52,44 @@
 
       <div v-else class="error-message">⚠️ 날씨 정보를 불러올 수 없습니다.</div>
     </div>
+
+    <!-- 뉴스 -->
+    <div class="card news-card">
+      <div class="card-header">
+        <h2>📰 오늘의 뉴스</h2>
+        <button @click="fetchNews" class="refresh-btn" :disabled="loading.news">
+          {{ loading.news ? '⏳' : '🔄' }}
+        </button>
+      </div>
+
+      <div v-if="loading.news" class="loading">
+        <div class="spinner">
+          <p>뉴스를 불러오는 중...</p>
+        </div>
+      </div>
+
+      <div v-else-if="news.length > 0" class="news-list">
+        <a
+          v-for="(item, index) in news"
+          :key="index"
+          :href="item.url"
+          target="_blank"
+          class="news-item"
+        >
+          <div class="news-number">{{ index + 1 }}</div>
+          <div class="news-content">
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description }}</p>
+            <div class="news-meta">
+              <span class="news-source">{{ item.source }}</span>
+              <span class="news-time">{{ item.time }}</span>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div v-else class="error-message">⚠️ 뉴스를 불러올 수 없습니다.</div>
+    </div>
   </div>
 </template>
 
@@ -99,7 +137,7 @@ const loading = ref({
 const weather = ref(null)
 
 // 뉴스 데이터
-// const news = ref([])
+const news = ref([])
 
 // 날씨 아이콘 매핑
 function getWeatherIcon(condition) {
@@ -167,6 +205,62 @@ async function fetchWeather() {
   }
 }
 
+// 뉴스 정보 가져오기(GNews API)
+async function fetchNews() {
+  loading.value.news = true
+
+  try {
+    const API_KEY = import.meta.env.VITE_API_KEY
+
+    const response = await fetch(
+      `https://gnews.io/api/v4/top-headlines?country=kr&lang=ko&max=5&apikey=${API_KEY}`,
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data.articles) {
+      news.value = data.articles.map((article) => ({
+        title: article.title,
+        description: article.description || '내용 없음',
+        source: article.source.name,
+        time: formatTime(article.publishedAt),
+        url: article.url,
+      }))
+    } else {
+      throw new Error('뉴스 데이터 없음')
+    }
+  } catch (error) {
+    console.error('뉴스 로딩 실패:', error)
+    news.value = []
+  } finally {
+    loading.value.news = false
+  }
+}
+
+// 시간 포맷 변환 함수
+function formatTime(publishedAt) {
+  const now = new Date()
+  const published = new Date(publishedAt)
+  const diffMs = now - published
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 1) return '방금'
+  if (diffMins < 60) return `${diffMins}분 전`
+  if (diffHours < 24) return `${diffHours}시간 전`
+  if (diffDays < 7) return `${diffDays}일 전`
+
+  return published.toLocaleDateString('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 // 컴포넌트 마운트시 실행
 onMounted(() => {
   // 1초마다 시간 업데이트
@@ -176,6 +270,7 @@ onMounted(() => {
 
   // 초기 데이터 로드
   fetchWeather()
+  fetchNews()
 })
 
 // 컴포넌트 언마운트 시 타이머 정리
