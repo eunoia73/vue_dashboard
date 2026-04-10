@@ -56,10 +56,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // 현재 시간
 const now = ref(new Date())
+let timeInterval = null
 
 // 현재 날짜
 const currentDate = computed(() => {
@@ -165,6 +166,24 @@ async function fetchWeather() {
     loading.value.weather = false
   }
 }
+
+// 컴포넌트 마운트시 실행
+onMounted(() => {
+  // 1초마다 시간 업데이트
+  timeInterval = setInterval(() => {
+    now.value = new Date()
+  }, 1000)
+
+  // 초기 데이터 로드
+  fetchWeather()
+})
+
+// 컴포넌트 언마운트 시 타이머 정리
+onUnmounted(() => {
+  if (timeInterval) {
+    clearInterval(timeInterval)
+  }
+})
 </script>
 
 <style scoped>
